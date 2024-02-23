@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	testutils "github.com/smallnest/rpcx/_testutils"
-	"github.com/smallnest/rpcx/protocol"
-	"github.com/smallnest/rpcx/share"
 	"github.com/stretchr/testify/assert"
+	testutils "github.com/thkhxm/rpcx/_testutils"
+	"github.com/thkhxm/rpcx/protocol"
+	"github.com/thkhxm/rpcx/share"
 )
 
 type Args struct {
