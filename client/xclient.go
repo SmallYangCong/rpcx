@@ -23,8 +23,13 @@ import (
 	"golang.org/x/sync/singleflight"
 )
 
+type ConsulServerState string
+
 const (
-	FileTransferBufferSize = 1024
+	FileTransferBufferSize                      = 1024
+	ConsulServerStateActive   ConsulServerState = "active"   //活跃,正常负载,正常调用
+	ConsulServerStateInActive ConsulServerState = "inactive" //停服,无法负载,无法请求,
+	ConsulServerStatePause    ConsulServerState = "pause"    //暂停,无法负载,正常调用
 )
 
 var (
@@ -232,7 +237,7 @@ func (c *xClient) watch(ch chan []*KVPair) {
 func filterByStateAndGroup(group string, servers map[string]string) {
 	for k, v := range servers {
 		if values, err := url.ParseQuery(v); err == nil {
-			if state := values.Get("state"); state == "inactive" {
+			if state := values.Get("state"); state == string(ConsulServerStateInActive) {
 				delete(servers, k)
 			}
 			if group != "" && group != values.Get("group") {
