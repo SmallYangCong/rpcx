@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"github.com/thkhxm/rpcx/client"
 	"io"
 	"net"
 	"net/http"
@@ -88,6 +89,8 @@ type Server struct {
 	EnableProfile      bool // enable profile and statsview or not
 	AsyncWrite         bool // set true if your server only serves few clients
 	pool               WorkerPool
+	logicSyncMethod    map[string]bool // servicepath.method: true/false
+	logicLockPool      []*sync.Mutex   // logic lock pool
 
 	serviceMapMu sync.RWMutex
 	serviceMap   map[string]*service
@@ -132,17 +135,26 @@ type Server struct {
 // NewServer returns a server.
 func NewServer(options ...OptionFn) *Server {
 	s := &Server{
-		Plugins:    &pluginContainer{},
-		options:    make(map[string]interface{}),
-		activeConn: make(map[net.Conn]struct{}),
-		doneChan:   make(chan struct{}),
-		serviceMap: make(map[string]*service),
-		router:     make(map[string]Handler),
-		AsyncWrite: false, // 除非你想做进一步的优化测试，否则建议你设置为false
+		Plugins:         &pluginContainer{},
+		options:         make(map[string]interface{}),
+		activeConn:      make(map[net.Conn]struct{}),
+		doneChan:        make(chan struct{}),
+		serviceMap:      make(map[string]*service),
+		router:          make(map[string]Handler),
+		logicSyncMethod: make(map[string]bool),
+		AsyncWrite:      false, // 除非你想做进一步的优化测试，否则建议你设置为false
 	}
 
 	for _, op := range options {
 		op(s)
+	}
+
+	// 如果你的服务端只服务少量的客户端，可以设置为true
+	if s.logicLockPool == nil && len(s.logicSyncMethod) > 0 {
+		s.logicLockPool = make([]*sync.Mutex, 5000)
+		for i := 0; i < len(s.logicLockPool); i++ {
+			s.logicLockPool[i] = &sync.Mutex{}
+		}
 	}
 
 	if s.options["TCPKeepAlivePeriod"] == nil {
@@ -582,7 +594,7 @@ func (s *Server) processOneRequest(ctx *share.Context, req *protocol.Message, co
 		sctx := NewContext(ctx, conn, req, s.AsyncWrite)
 		err := handler(sctx)
 		if err != nil {
-			log.Errorf("[handler internal error]: servicepath: %s, servicemethod, err: %v", req.ServicePath, req.ServiceMethod, err)
+			log.Errorf("[handler internal error]: servicepath: %s, servicemethod %s, err: %v", req.ServicePath, req.ServiceMethod, err)
 		}
 
 		return
@@ -731,7 +743,14 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 		reflectTypePools.Put(mtype.ReplyType, replyv)
 		return s.handleError(res, err)
 	}
+	if s.logicSyncMethod[serviceName+"."+methodName] {
+		if hash, ok := ctx.Value(share.ReqMetaDataKey).(map[string]string); ok {
+			l := s.logicLockPool[client.HashString(hash["__hash"])%uint64(len(s.logicLockPool))]
+			l.Lock()
+			defer l.Unlock()
+		}
 
+	}
 	if mtype.ArgType.Kind() != reflect.Ptr {
 		err = service.call(ctx, mtype, reflect.ValueOf(argv).Elem(), reflect.ValueOf(replyv))
 	} else {

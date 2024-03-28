@@ -347,7 +347,6 @@ func (s *service) call(ctx context.Context, mtype *methodType, argv, replyv refl
 			log.Error(err)
 		}
 	}()
-
 	function := mtype.method.Func
 	// Invoke the method, providing a new value for the reply.
 	returnValues := function.Call([]reflect.Value{s.rcvr, reflect.ValueOf(ctx), argv, replyv})

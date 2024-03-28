@@ -2,6 +2,7 @@ package server
 
 import (
 	"crypto/tls"
+	"sync"
 	"time"
 
 	"github.com/alitto/pond"
@@ -37,6 +38,23 @@ func WithReadTimeout(readTimeout time.Duration) OptionFn {
 func WithWriteTimeout(writeTimeout time.Duration) OptionFn {
 	return func(s *Server) {
 		s.writeTimeout = writeTimeout
+	}
+}
+
+// WithLogicSync  add logic sync method, example : WithLogicSync("ServiceName.MethodName")
+func WithLogicSync(serviceMethod string) OptionFn {
+	return func(s *Server) {
+		s.logicSyncMethod[serviceMethod] = true
+	}
+}
+
+// WithLogicSyncPoolSize sets logic sync pool size.
+func WithLogicSyncPoolSize(size int) OptionFn {
+	return func(s *Server) {
+		s.logicLockPool = make([]*sync.Mutex, size)
+		for i := 0; i < size; i++ {
+			s.logicLockPool[i] = &sync.Mutex{}
+		}
 	}
 }
 
