@@ -68,6 +68,40 @@ func (c *Context) DeleteKey(key interface{}) {
 	delete(c.tags, key)
 }
 
+func (c *Context) GetReqMetaDataByKey(key string) string {
+	c.tagsLock.Lock()
+	defer c.tagsLock.Unlock()
+	meta := c.getReqMetaData()
+	if meta == nil {
+		return ""
+	}
+	return meta[key]
+}
+func (c *Context) getReqMetaData() map[string]string {
+	var meta map[string]string
+	if c.tags == nil {
+		c.tags = make(map[interface{}]interface{})
+	}
+
+	if v, ok := c.tags[ReqMetaDataKey]; ok {
+		meta = v.(map[string]string)
+	} else if va, ok2 := c.Context.Value(ReqMetaDataKey).(map[string]string); ok2 {
+		meta = va
+	}
+	return meta
+}
+
+func (c *Context) SetReqMetaData(key, val string) {
+	c.tagsLock.Lock()
+	defer c.tagsLock.Unlock()
+	meta := c.getReqMetaData()
+	if meta == nil {
+		meta = make(map[string]string)
+		c.tags[ReqMetaDataKey] = meta
+	}
+	meta[key] = val
+}
+
 func (c *Context) String() string {
 	return fmt.Sprintf("%v.WithValue(%v)", c.Context, c.tags)
 }
