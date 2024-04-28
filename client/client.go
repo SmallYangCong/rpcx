@@ -7,6 +7,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"github.com/panjf2000/ants/v2"
 	"io"
 	"net"
 	"net/url"
@@ -625,7 +626,14 @@ func (client *Client) send(ctx context.Context, call *Call) {
 
 func (client *Client) input() {
 	var err error
-
+	initSize := 102400
+	p, _ := ants.NewPool(initSize)
+	defer func() {
+		p.Release()
+		if r := recover(); r != nil {
+			log.Errorf("client.input panic: %v", r)
+		}
+	}()
 	for err == nil {
 		res := protocol.NewMessage()
 		if client.option.IdleTimeout != 0 {
@@ -636,81 +644,83 @@ func (client *Client) input() {
 		if err != nil {
 			break
 		}
-		if client.Plugins != nil {
-			_ = client.Plugins.DoClientAfterDecode(res)
-		}
-
-		seq := res.Seq()
-		var call *Call
-		isServerMessage := (res.MessageType() == protocol.Request && !res.IsHeartbeat() && res.IsOneway())
-		if !isServerMessage {
-			client.mutex.Lock()
-			call = client.pending[seq]
-			delete(client.pending, seq)
-			client.mutex.Unlock()
-		}
-
-		if share.Trace {
-			log.Debugf("client.input received %v", res)
-		}
-
-		switch {
-		case call == nil:
-			if isServerMessage {
-				if client.ServerMessageChan != nil {
-					client.handleServerRequest(res)
-				}
-				continue
-			}
-		case res.MessageStatusType() == protocol.Error:
-			// We've got an error response. Give this to the request
-			if len(res.Metadata) > 0 {
-				call.ResMetadata = res.Metadata
-
-				// convert server error to a customized error, which implements ServerError interface
-				if ClientErrorFunc != nil {
-					call.Error = ClientErrorFunc(res, res.Metadata[protocol.ServiceError])
-				} else {
-					call.Error = strErr(res.Metadata[protocol.ServiceError])
-				}
-
+		p.Submit(func() {
+			if client.Plugins != nil {
+				_ = client.Plugins.DoClientAfterDecode(res)
 			}
 
-			if call.Raw {
-				call.Metadata, call.Reply, _ = convertRes2Raw(res)
-				call.Metadata[XErrorMessage] = call.Error.Error()
-			} else if len(res.Payload) > 0 {
-				data := res.Payload
-				codec := share.Codecs[res.SerializeType()]
-				if codec != nil {
-					_ = codec.Decode(data, call.Reply)
-				}
+			seq := res.Seq()
+			var call *Call
+			isServerMessage := (res.MessageType() == protocol.Request && !res.IsHeartbeat() && res.IsOneway())
+			if !isServerMessage {
+				client.mutex.Lock()
+				call = client.pending[seq]
+				delete(client.pending, seq)
+				client.mutex.Unlock()
 			}
-			call.done()
-		default:
-			if call.Raw {
-				call.Metadata, call.Reply, _ = convertRes2Raw(res)
-			} else {
-				data := res.Payload
-				if len(data) > 0 {
-					codec := share.Codecs[res.SerializeType()]
-					if codec == nil {
-						call.Error = strErr(ErrUnsupportedCodec.Error())
-					} else {
-						err = codec.Decode(data, call.Reply)
-						if err != nil {
-							call.Error = strErr(err.Error())
-						}
+
+			if share.Trace {
+				log.Debugf("client.input received %v", res)
+			}
+
+			switch {
+			case call == nil:
+				if isServerMessage {
+					if client.ServerMessageChan != nil {
+						client.handleServerRequest(res)
 					}
+					return
 				}
+			case res.MessageStatusType() == protocol.Error:
+				// We've got an error response. Give this to the request
 				if len(res.Metadata) > 0 {
 					call.ResMetadata = res.Metadata
+
+					// convert server error to a customized error, which implements ServerError interface
+					if ClientErrorFunc != nil {
+						call.Error = ClientErrorFunc(res, res.Metadata[protocol.ServiceError])
+					} else {
+						call.Error = strErr(res.Metadata[protocol.ServiceError])
+					}
+
 				}
 
-			}
+				if call.Raw {
+					call.Metadata, call.Reply, _ = convertRes2Raw(res)
+					call.Metadata[XErrorMessage] = call.Error.Error()
+				} else if len(res.Payload) > 0 {
+					data := res.Payload
+					codec := share.Codecs[res.SerializeType()]
+					if codec != nil {
+						_ = codec.Decode(data, call.Reply)
+					}
+				}
+				call.done()
+			default:
+				if call.Raw {
+					call.Metadata, call.Reply, _ = convertRes2Raw(res)
+				} else {
+					data := res.Payload
+					if len(data) > 0 {
+						codec := share.Codecs[res.SerializeType()]
+						if codec == nil {
+							call.Error = strErr(ErrUnsupportedCodec.Error())
+						} else {
+							err = codec.Decode(data, call.Reply)
+							if err != nil {
+								call.Error = strErr(err.Error())
+							}
+						}
+					}
+					if len(res.Metadata) > 0 {
+						call.ResMetadata = res.Metadata
+					}
 
-			call.done()
-		}
+				}
+				call.done()
+			}
+		})
+
 	}
 	// Terminate pending calls.
 

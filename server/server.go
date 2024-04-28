@@ -744,13 +744,13 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 		return s.handleError(res, err)
 	}
 	if s.logicSyncMethod[serviceName+"."+methodName] {
-		if hash, ok := ctx.Value(share.ReqMetaDataKey).(map[string]string); ok {
-			l := s.logicLockPool[client.HashString(hash["__hash"])%uint64(len(s.logicLockPool))]
+		if ct, ok := ctx.(*share.Context); ok {
+			l := s.logicLockPool[client.HashString(ct.GetReqMetaDataByKey(share.ContextKeyHash))%uint64(len(s.logicLockPool))]
 			l.Lock()
 			defer l.Unlock()
 		}
-
 	}
+
 	if mtype.ArgType.Kind() != reflect.Ptr {
 		err = service.call(ctx, mtype, reflect.ValueOf(argv).Elem(), reflect.ValueOf(replyv))
 	} else {

@@ -58,6 +58,7 @@ var ReqMetaDataKey = ContextKey("__req_metadata")
 
 // ResMetaDataKey is used to set metadata in context of responses.
 var ResMetaDataKey = ContextKey("__res_metadata")
+var ContextKeyHash = "__hash"
 
 // FileTransferArgs args from clients.
 type FileTransferArgs struct {
