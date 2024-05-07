@@ -240,8 +240,18 @@ func filterByStateAndGroup(group string, servers map[string]string) {
 			if state := values.Get("state"); state == string(ConsulServerStateInActive) {
 				delete(servers, k)
 			}
-			if group != "" && group != values.Get("group") {
-				delete(servers, k)
+			groups := values["group"] // Directly access the map to get all values associated with "group" as a slice
+			if group != "" {
+				found := false
+				for _, g := range groups {
+					if group == g {
+						found = true
+						break // A matching group is found, stop the search
+					}
+				}
+				if !found {
+					delete(servers, k) // If no matching group is found, delete the corresponding server from the map
+				}
 			}
 		}
 	}
@@ -250,6 +260,13 @@ func filterByStateAndGroup(group string, servers map[string]string) {
 // selects a client from candidates base on c.selectMode
 func (c *xClient) selectClient(ctx context.Context, servicePath, serviceMethod string, args interface{}) (string, RPCClient, error) {
 	c.mu.Lock()
+
+	if c.option.Sticky && c.stickyRPCClient != nil {
+		if c.stickyRPCClient.IsClosing() || c.stickyRPCClient.IsShutdown() {
+			c.stickyRPCClient = nil
+		}
+	}
+
 	if c.option.Sticky && c.stickyRPCClient != nil {
 		c.mu.Unlock()
 		return c.stickyK, c.stickyRPCClient, nil
@@ -269,11 +286,27 @@ func (c *xClient) selectClient(ctx context.Context, servicePath, serviceMethod s
 	client, err := c.getCachedClient(k, servicePath, serviceMethod, args)
 
 	if c.option.Sticky && client != nil {
+		c.mu.Lock()
+		safeCloseClient(c.stickyRPCClient)
+
 		c.stickyK = k
 		c.stickyRPCClient = client
+		c.mu.Unlock()
 	}
 
 	return k, client, err
+}
+
+func safeCloseClient(client RPCClient) {
+	if client == nil {
+		return
+	}
+
+	defer func() {
+		_ = recover()
+	}()
+
+	client.Close()
 }
 
 func (c *xClient) getCachedClient(k string, servicePath, serviceMethod string, args interface{}) (RPCClient, error) {
