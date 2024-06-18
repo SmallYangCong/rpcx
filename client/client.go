@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/panjf2000/ants/v2"
 	"io"
+	"maps"
 	"net"
 	"net/url"
 	"strconv"
@@ -261,7 +262,9 @@ func (client *Client) Go(ctx context.Context, servicePath, serviceMethod string,
 	call.ServiceMethod = serviceMethod
 	meta := ctx.Value(share.ReqMetaDataKey)
 	if meta != nil { // copy meta in context to meta in requests
-		call.Metadata = meta.(map[string]string)
+		call.Metadata = make(map[string]string)
+		// 这里在高并发的情况下,如果外部对meta进行了修改,会导致并发问题
+		maps.Copy(call.Metadata, meta.(map[string]string))
 	}
 
 	if !share.IsShareContext(ctx) {
