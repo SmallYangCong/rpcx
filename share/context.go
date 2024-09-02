@@ -3,6 +3,7 @@ package share
 import (
 	"context"
 	"fmt"
+	"golang.org/x/exp/maps"
 	"reflect"
 	"sync"
 )
@@ -89,6 +90,14 @@ func (c *Context) getReqMetaData() map[string]string {
 		meta = va
 	}
 	return meta
+}
+
+func (c *Context) GetAllReqMetaDataKeys() (keys []string) {
+	c.tagsLock.Lock()
+	defer c.tagsLock.Unlock()
+	tmpMaps := c.getReqMetaData()
+	keys = maps.Keys(tmpMaps)
+	return
 }
 
 func (c *Context) SetReqMetaData(key, val string) {
