@@ -1,6 +1,6 @@
 module github.com/thkhxm/rpcx
 
-go 1.23
+go 1.23.3
 
 require (
 	github.com/ChimeraCoder/gojson v1.1.0
