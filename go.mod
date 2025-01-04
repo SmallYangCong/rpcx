@@ -1,7 +1,9 @@
 module github.com/smallnest/rpcx
 
 go 1.23.4
-
+replace (
+	github.com/alitto/pond => 	github.com/alitto/pond v1.8.3
+)
 require (
 	github.com/ChimeraCoder/gojson v1.1.0
 	github.com/akutz/memconn v0.1.0
