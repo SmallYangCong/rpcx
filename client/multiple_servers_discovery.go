@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/thkhxm/rpcx/log"
+	"github.com/smallnest/rpcx/log"
 )
 
 // MultipleServersDiscovery is a multiple servers service discovery.

@@ -6,8 +6,8 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/go-redis/redis_rate/v9"
-	"github.com/thkhxm/rpcx/client"
-	"github.com/thkhxm/rpcx/server"
+	"github.com/smallnest/rpcx/client"
+	"github.com/smallnest/rpcx/server"
 )
 
 var _ client.PreCallPlugin = (*RedisRateLimitingPlugin)(nil)

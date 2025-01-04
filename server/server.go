@@ -6,7 +6,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"github.com/thkhxm/rpcx/client"
+	"github.com/smallnest/rpcx/client"
 	"io"
 	"net"
 	"net/http"
@@ -22,10 +22,10 @@ import (
 	"time"
 
 	"github.com/jamiealquiza/tachymeter"
+	"github.com/smallnest/rpcx/log"
+	"github.com/smallnest/rpcx/protocol"
+	"github.com/smallnest/rpcx/share"
 	"github.com/soheilhy/cmux"
-	"github.com/thkhxm/rpcx/log"
-	"github.com/thkhxm/rpcx/protocol"
-	"github.com/thkhxm/rpcx/share"
 	"golang.org/x/net/websocket"
 )
 
@@ -79,20 +79,20 @@ type WorkerPool interface {
 
 // Server is rpcx server that use TCP or UDP.
 type Server struct {
-	ln                 net.Listener
-	readTimeout        time.Duration
-	writeTimeout       time.Duration
-	gatewayHTTPServer  *http.Server
+	ln                net.Listener
+	readTimeout       time.Duration
+	writeTimeout      time.Duration
+	gatewayHTTPServer *http.Server
 
 	jsonrpcHTTPServerLock sync.Mutex
-	jsonrpcHTTPServer  *http.Server
-	DisableHTTPGateway bool // disable http invoke or not.
-	DisableJSONRPC     bool // disable json rpc or not.
-	EnableProfile      bool // enable profile and statsview or not
-	AsyncWrite         bool // set true if your server only serves few clients
-	pool               WorkerPool
-	logicSyncMethod    map[string]bool // servicepath.method: true/false
-	logicLockPool      []*sync.Mutex   // logic lock pool
+	jsonrpcHTTPServer     *http.Server
+	DisableHTTPGateway    bool // disable http invoke or not.
+	DisableJSONRPC        bool // disable json rpc or not.
+	EnableProfile         bool // enable profile and statsview or not
+	AsyncWrite            bool // set true if your server only serves few clients
+	pool                  WorkerPool
+	logicSyncMethod       map[string]bool // servicepath.method: true/false
+	logicLockPool         []*sync.Mutex   // logic lock pool
 
 	serviceMapMu sync.RWMutex
 	serviceMap   map[string]*service

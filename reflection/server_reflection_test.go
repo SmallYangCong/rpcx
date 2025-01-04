@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/kr/pretty"
+	testutils "github.com/smallnest/rpcx/_testutils"
 	"github.com/stretchr/testify/assert"
-	testutils "github.com/thkhxm/rpcx/_testutils"
 )
 
 type PBArith int

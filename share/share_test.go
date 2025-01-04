@@ -3,8 +3,8 @@ package share
 import (
 	"testing"
 
+	"github.com/smallnest/rpcx/protocol"
 	"github.com/stretchr/testify/assert"
-	"github.com/thkhxm/rpcx/protocol"
 )
 
 type MockCodec struct{}
