@@ -1,4 +1,4 @@
-module github.com/smallnest/rpcx
+module github.com/SmallYangCong/rpcx
 
 go 1.23.4
 replace (
