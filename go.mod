@@ -33,7 +33,7 @@ require (
 	github.com/rs/cors v1.11.1
 	github.com/rubyist/circuitbreaker v2.2.1+incompatible
 	github.com/smallnest/quick v0.2.0
-	github.com/smallnest/statsview v1.0.0
+	github.com/smallnest/statsview v0.0.0-20231119085602-10700f9abec4
 	github.com/soheilhy/cmux v0.1.5
 	github.com/stretchr/testify v1.10.0
 	github.com/tinylib/msgp v1.2.5
