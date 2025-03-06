@@ -8,10 +8,10 @@ import (
 
 	"fmt"
 
-	testutils "github.com/smallnest/rpcx/_testutils"
-	"github.com/smallnest/rpcx/protocol"
-	"github.com/smallnest/rpcx/server"
-	"github.com/smallnest/rpcx/share"
+	testutils "github.com/SmallYangCong/rpcx/_testutils"
+	"github.com/SmallYangCong/rpcx/protocol"
+	"github.com/SmallYangCong/rpcx/server"
+	"github.com/SmallYangCong/rpcx/share"
 )
 
 func TestXClient_Thrift(t *testing.T) {

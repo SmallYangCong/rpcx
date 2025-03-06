@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	testutils "github.com/smallnest/rpcx/_testutils"
-	"github.com/smallnest/rpcx/protocol"
-	"github.com/smallnest/rpcx/share"
+	testutils "github.com/SmallYangCong/rpcx/_testutils"
+	"github.com/SmallYangCong/rpcx/protocol"
+	"github.com/SmallYangCong/rpcx/share"
 	"github.com/stretchr/testify/assert"
 )
 
