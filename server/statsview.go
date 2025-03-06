@@ -8,11 +8,11 @@ import (
 	"net/http/pprof"
 	"time"
 
+	"github.com/SmallYangCong/statsview/statics"
+	"github.com/SmallYangCong/statsview/viewer"
 	"github.com/go-echarts/go-echarts/v2/components"
 	"github.com/go-echarts/go-echarts/v2/templates"
 	"github.com/rs/cors"
-	"github.com/smallnest/statsview/statics"
-	"github.com/smallnest/statsview/viewer"
 )
 
 // ViewManager

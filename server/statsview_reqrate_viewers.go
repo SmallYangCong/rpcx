@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/SmallYangCong/statsview/viewer"
 	"github.com/go-echarts/go-echarts/v2/charts"
 	"github.com/go-echarts/go-echarts/v2/opts"
-	"github.com/smallnest/statsview/viewer"
 )
 
 const (
