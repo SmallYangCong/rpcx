@@ -2,13 +2,11 @@ module github.com/SmallYangCong/rpcx
 
 go 1.23.6
 
-replace github.com/alitto/pond => github.com/alitto/pond v1.8.3
-
 require (
 	github.com/ChimeraCoder/gojson v1.1.0
 	github.com/SmallYangCong/statsview v1.0.1
 	github.com/akutz/memconn v0.1.0
-	github.com/alitto/pond v1.9.2
+	github.com/alitto/pond v1.8.3
 	github.com/apache/thrift v0.21.0
 	github.com/edwingeng/doublejump v1.0.1
 	github.com/fatih/color v1.18.0
